@@ -13,9 +13,6 @@ import org.springframework.web.server.ServerWebExchange;
 import io.github.jhonatasdefreitas.gateway.logging.CorrelationIdFilter;
 import reactor.core.publisher.Mono;
 
-/**
- * Where a route lands when its service is down, too slow, or its circuit is open.
- */
 @RestController
 public class ServiceFallback {
 

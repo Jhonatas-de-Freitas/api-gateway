@@ -12,9 +12,6 @@ import org.springframework.web.server.WebFilterChain;
 
 import reactor.core.publisher.Mono;
 
-/**
- * Gives every request an id that follows it to the services behind and back to the caller.
- */
 @Component
 @Order(Ordered.HIGHEST_PRECEDENCE)
 public class CorrelationIdFilter implements WebFilter {

@@ -9,9 +9,6 @@ import org.springframework.web.server.ServerWebExchange;
 
 import reactor.core.publisher.Mono;
 
-/**
- * One bucket per logged-in user. Requests without login share a bucket per client address.
- */
 @Component
 class UserOrIpKeyResolver implements KeyResolver {
 

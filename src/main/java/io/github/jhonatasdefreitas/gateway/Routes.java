@@ -17,9 +17,6 @@ import io.github.jhonatasdefreitas.gateway.GatewaySettings.Services;
 import io.github.jhonatasdefreitas.gateway.error.ServiceFallback;
 import io.github.jhonatasdefreitas.gateway.ratelimit.RateLimitFilter;
 
-/**
- * The route table of the contract. Who may call each path is decided earlier, in the security chain.
- */
 @Configuration(proxyBeanMethods = false)
 class Routes {
 
@@ -29,6 +26,7 @@ class Routes {
     private static final String NOTIFICATION_SERVICE = "notification-service";
     private static final String ORDER_ANALYTICS = "order-analytics";
 
+    // Who may call each path is decided before this, in SecurityConfig.
     @Bean
     RouteLocator routeLocator(RouteLocatorBuilder builder, GatewaySettings settings,
             RateLimitFilter generalRateLimit, RateLimitFilter orderCreationRateLimit) {

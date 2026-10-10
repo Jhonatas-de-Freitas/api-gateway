@@ -15,10 +15,6 @@ import org.springframework.web.server.WebFilterChain;
 import io.github.jhonatasdefreitas.gateway.logging.AccessLogFilter;
 import reactor.core.publisher.Mono;
 
-/**
- * Tells the services behind who is calling. The {@code X-User-*} headers are always rebuilt from the
- * validated token, so a caller cannot send them and pass for someone else.
- */
 class UserHeadersFilter implements WebFilter {
 
     static final String USER_ID = "X-User-Id";
@@ -44,6 +40,7 @@ class UserHeadersFilter implements WebFilter {
                 });
     }
 
+    // Always rebuilt from the validated token, so a caller cannot send these headers and pass for someone else.
     private static void rewrite(HttpHeaders headers, Optional<Jwt> token) {
         USER_HEADERS.forEach(headers::remove);
         token.ifPresent(jwt -> {

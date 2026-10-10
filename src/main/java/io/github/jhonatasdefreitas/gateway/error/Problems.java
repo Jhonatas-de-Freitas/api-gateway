@@ -19,9 +19,6 @@ import org.springframework.web.server.ServerWebExchange;
 
 import reactor.core.publisher.Mono;
 
-/**
- * Writes the errors the gateway itself answers (401, 403, 429, 503...) as {@code application/problem+json}.
- */
 @Component
 public class Problems {
 

@@ -39,11 +39,6 @@ import org.testcontainers.utility.MountableFile;
 import com.github.tomakehurst.wiremock.WireMockServer;
 import com.jayway.jsonpath.JsonPath;
 
-/**
- * The realm file of this repository in a real Keycloak. The container is reached through a random
- * port while the realm says its public address is localhost:8180, which is the situation of the gateway
- * inside Docker: keys fetched from one address, tokens issued in the name of another.
- */
 @SpringBootTest(webEnvironment = WebEnvironment.RANDOM_PORT)
 @Import(TestcontainersConfiguration.class)
 @Testcontainers(disabledWithoutDocker = true)
@@ -51,6 +46,9 @@ class KeycloakIT {
 
     private static final String KEYBOARD_STOCK = "/products/11111111-1111-1111-1111-111111111111/stock";
 
+    // Reached through a random port while it says its public address is localhost:8180. That is the
+    // situation of the gateway inside Docker: keys fetched from one address, tokens issued in the name
+    // of another.
     @Container
     static final GenericContainer<?> keycloak = new GenericContainer<>("quay.io/keycloak/keycloak:26.8.0")
             .withCommand("start-dev", "--import-realm")
@@ -158,7 +156,7 @@ class KeycloakIT {
                 .withHeader("X-User-Roles", matching("(?=.*\\badmin\\b)(?=.*\\bcustomer\\b).*")));
     }
 
-    /** The direct access grant of the contract: user and password straight to the token endpoint. */
+    // The direct access grant of the contract: user and password straight to the token endpoint.
     private static String login(String username, String password) {
         Map<?, ?> response = WebClient.create(keycloakUrl()).post()
                 .uri("/realms/store/protocol/openid-connect/token")

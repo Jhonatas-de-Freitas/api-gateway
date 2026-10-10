@@ -16,9 +16,6 @@ import com.nimbusds.jose.jwk.gen.RSAKeyGenerator;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
 
-/**
- * Stands in for Keycloak: holds a signing key and issues access tokens shaped like the ones of the realm.
- */
 final class TestTokens {
 
     static final String ISSUER = "http://localhost:8180/realms/store";
@@ -38,7 +35,7 @@ final class TestTokens {
         }
     }
 
-    /** Another key pair published under the same key id, as a forger would try. */
+    // Another key pair under the same key id, as a forger would try.
     TestTokens withForgedKey() {
         return new TestTokens(key.getKeyID());
     }
