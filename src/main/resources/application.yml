@@ -1,0 +1,71 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: api-gateway
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      timeout: 1s
+      connect-timeout: 1s
+      repositories:
+        enabled: false
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          # The issuer is the address the browser sees. The keys may come from another address (inside
+          # Docker, keycloak:8080), so they have their own setting and the issuer is only compared.
+          issuer-uri: ${KEYCLOAK_ISSUER_URI:http://localhost:8180/realms/store}
+          jwk-set-uri: ${KEYCLOAK_JWK_SET_URI:http://localhost:8180/realms/store/protocol/openid-connect/certs}
+  cloud:
+    gateway:
+      server:
+        webflux:
+          httpclient:
+            connect-timeout: 1000
+
+gateway:
+  services:
+    order: ${ORDER_SERVICE_URL:http://localhost:8081}
+    inventory: ${INVENTORY_SERVICE_URL:http://localhost:8082}
+    payment: ${PAYMENT_SERVICE_URL:http://localhost:8083}
+    notification: ${NOTIFICATION_SERVICE_URL:http://localhost:8084}
+    analytics: ${ORDER_ANALYTICS_URL:http://localhost:8090}
+  rate-limit:
+    general:
+      replenish-rate: ${RATE_LIMIT_REPLENISH_RATE:20}
+      burst-capacity: ${RATE_LIMIT_BURST_CAPACITY:40}
+    order-creation:
+      replenish-rate: ${ORDER_RATE_LIMIT_REPLENISH_RATE:2}
+      burst-capacity: ${ORDER_RATE_LIMIT_BURST_CAPACITY:5}
+  cors:
+    allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:5173}
+
+# Each service gets its own breaker and time limit, named after it in Routes (order-service, ...).
+# These are the defaults for all of them; "instances.<name>" overrides one.
+resilience4j:
+  circuitbreaker:
+    configs:
+      default:
+        sliding-window-size: 10
+        minimum-number-of-calls: 5
+        failure-rate-threshold: 50
+        wait-duration-in-open-state: ${CIRCUIT_BREAKER_OPEN_DURATION:10s}
+        permitted-number-of-calls-in-half-open-state: 2
+  timelimiter:
+    configs:
+      default:
+        timeout-duration: ${SERVICE_TIMEOUT:2s}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,prometheus
+  endpoint:
+    health:
+      probes:
+        enabled: true
