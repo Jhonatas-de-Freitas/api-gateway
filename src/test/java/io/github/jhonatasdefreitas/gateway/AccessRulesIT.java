@@ -9,9 +9,11 @@ import static com.github.tomakehurst.wiremock.client.WireMock.post;
 import static com.github.tomakehurst.wiremock.client.WireMock.putRequestedFor;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.awaitility.Awaitility.await;
 import static org.junit.jupiter.api.Named.named;
 import static org.junit.jupiter.params.provider.Arguments.arguments;
 
+import java.time.Duration;
 import java.util.stream.Stream;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -193,5 +195,21 @@ class AccessRulesIT extends IntegrationTestSupport {
         client.get().uri("/actuator/prometheus")
                 .exchange()
                 .expectStatus().isOk();
+    }
+
+    @Test
+    void metricsNameTheRouteButNotWhereTheServiceIs() {
+        client.get().uri("/api/products")
+                .exchange()
+                .expectStatus().isOk();
+
+        // The request is counted when the gateway is done with it, a moment after the client has the answer.
+        // In this context every service and Redis are on localhost.
+        await().atMost(Duration.ofSeconds(5)).untilAsserted(() -> client.get().uri("/actuator/prometheus")
+                .exchange()
+                .expectStatus().isOk()
+                .expectBody(String.class).value(metrics -> assertThat(metrics)
+                        .contains("routeId=\"inventory\"")
+                        .doesNotContain("localhost")));
     }
 }
