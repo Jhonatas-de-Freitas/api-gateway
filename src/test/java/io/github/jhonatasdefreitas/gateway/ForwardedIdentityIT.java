@@ -75,6 +75,27 @@ class ForwardedIdentityIT extends IntegrationTestSupport {
     }
 
     @Test
+    void callerCannotStripTheHeadersOfTheGatewayThroughConnection() {
+        TestUser ana = TestUser.ana();
+
+        String returned = client.get().uri("/api/orders")
+                .header(HttpHeaders.AUTHORIZATION, bearer(ana))
+                .header(HttpHeaders.CONNECTION,
+                        "close, X-User-Id, X-User-Name, X-User-Email, X-User-Roles, X-Correlation-Id")
+                .exchange()
+                .expectStatus().isOk()
+                .returnResult(Void.class)
+                .getResponseHeaders().getFirst(CORRELATION_ID);
+
+        LoggedRequest received = orderReceived();
+        assertThat(valuesOf(received, "X-User-Id")).containsExactly(ana.id());
+        assertThat(valuesOf(received, "X-User-Name")).containsExactly("Ana Souza");
+        assertThat(valuesOf(received, "X-User-Email")).containsExactly("ana@exemplo.com");
+        assertThat(valuesOf(received, "X-User-Roles")).containsExactly("customer");
+        assertThat(valuesOf(received, CORRELATION_ID)).containsExactly(returned);
+    }
+
+    @Test
     void dropsUserHeadersOnRoutesWithoutLogin() {
         client.get().uri("/api/products")
                 .header("X-User-Id", "someone-else")
