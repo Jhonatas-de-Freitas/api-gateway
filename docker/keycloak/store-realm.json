@@ -1,0 +1,53 @@
+{
+  "realm": "store",
+  "displayName": "Loja",
+  "enabled": true,
+  "sslRequired": "none",
+  "registrationAllowed": false,
+  "roles": {
+    "realm": [
+      { "name": "customer", "description": "Cliente da loja" },
+      { "name": "admin", "description": "Administra produtos e vê as métricas" }
+    ]
+  },
+  "clients": [
+    {
+      "clientId": "store-web",
+      "name": "Painel da loja",
+      "enabled": true,
+      "publicClient": true,
+      "standardFlowEnabled": true,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": true,
+      "serviceAccountsEnabled": false,
+      "redirectUris": ["http://localhost:5173/*"],
+      "webOrigins": ["http://localhost:5173"],
+      "attributes": {
+        "pkce.code.challenge.method": "S256",
+        "post.logout.redirect.uris": "http://localhost:5173/*"
+      }
+    }
+  ],
+  "users": [
+    {
+      "username": "ana",
+      "firstName": "Ana",
+      "lastName": "Souza",
+      "email": "ana@exemplo.com",
+      "emailVerified": true,
+      "enabled": true,
+      "credentials": [{ "type": "password", "value": "demo123", "temporary": false }],
+      "realmRoles": ["customer"]
+    },
+    {
+      "username": "admin",
+      "firstName": "Admin",
+      "lastName": "Loja",
+      "email": "admin@exemplo.com",
+      "emailVerified": true,
+      "enabled": true,
+      "credentials": [{ "type": "password", "value": "admin123", "temporary": false }],
+      "realmRoles": ["admin", "customer"]
+    }
+  ]
+}
