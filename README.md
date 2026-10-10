@@ -37,7 +37,7 @@ O gateway tira o `/api` do caminho e repassa:
 | `/api/notifications/**`, `/api/preferences/**` | notification-service | logado |
 | `/api/analytics/**` | order-analytics | papel `admin` |
 
-Qualquer outro caminho é recusado. Os erros que o próprio gateway responde (`401`, `403`, `429`, `503`) saem em `application/problem+json`, com a mensagem em português. Cada requisição vira uma linha de log com método, caminho, status, tempo, usuário e correlation id.
+Qualquer outro caminho é recusado. Os erros que o próprio gateway responde (`401`, `403`, `429`, `503`) saem em `application/problem+json`, com a mensagem em português, inclusive a recusa de CORS. Cada requisição vira uma linha de log com método, caminho, status, tempo, usuário e correlation id.
 
 ## Como rodar
 
@@ -84,6 +84,12 @@ curl -s http://localhost:8080/api/products | jq '.[].name'
 curl -i http://localhost:8080/api/orders        # 401
 ```
 
+Token que não vale: qualquer coisa que não seja um token assinado pelo Keycloak, dentro da validade, volta `401`.
+
+```bash
+curl -i -H "Authorization: Bearer abc" http://localhost:8080/api/orders        # 401
+```
+
 Com login e com papel: a Ana lê os pedidos dela, mas só o admin mexe no estoque e vê as métricas.
 
 ```bash
@@ -103,6 +109,13 @@ Tentar se passar por outra pessoa: mando `X-User-Id` e `X-User-Roles` falsos e d
 curl -s -o /dev/null http://localhost:8080/api/orders/7c1f0a34-5b1d-4f6e-8a2b-9d3e4f5a6b7c \
   -H "Authorization: Bearer $ANA" -H 'X-User-Id: outra-pessoa' -H 'X-User-Roles: admin'
 curl -s http://localhost:8089/__admin/requests | jq '.requests[0].request.headers'
+```
+
+CORS: o navegador pergunta antes de chamar de outro endereço. O painel (`http://localhost:5173`) é aceito; outra origem recebe `403`.
+
+```bash
+curl -i -X OPTIONS http://localhost:8080/api/orders -H 'Origin: http://localhost:5173' -H 'Access-Control-Request-Method: POST'   # 200
+curl -i -X OPTIONS http://localhost:8080/api/orders -H 'Origin: http://localhost:3000' -H 'Access-Control-Request-Method: POST'   # 403
 ```
 
 Estourar o limite: criar pedido aceita uma rajada de 5 e repõe 2 por segundo. Os primeiros voltam `202`, os seguintes `429`. O último comando, rodado logo em seguida, mostra a resposta recusada com os headers `X-RateLimit-*` e `Retry-After` (se vier `202`, o balde já repôs uma ficha: rode o bloco de novo). O limite é por usuário: troque `$ANA` por `$ADMIN` e o pedido passa.
@@ -130,6 +143,12 @@ curl -i -H "Authorization: Bearer $ANA" http://localhost:8080/api/payments/7c1f0
 docker compose start wiremock
 ```
 
+Serviço lento: o exemplo tem um pagamento que demora 5 segundos para responder. O gateway espera 2 e responde `503`.
+
+```bash
+curl -i -H "Authorization: Bearer $ANA" http://localhost:8080/api/payments/slow   # 503 depois de 2 s
+```
+
 Para ver o log de acesso: `docker compose logs api-gateway | grep access`.
 
 ## Decisões que tomei e por quê
@@ -140,9 +159,11 @@ Para ver o log de acesso: `docker compose logs api-gateway | grep access`.
 
 **O que o circuit breaker protege.** Protege o gateway e quem está chamando. Sem ele, cada chamada para um serviço parado esperaria o tempo limite inteiro, segurando conexão. Com ele, depois de 5 chamadas com metade falhando, o gateway responde `503` na hora por 10 segundos e então deixa passar 2 chamadas de teste. Cada serviço tem o seu circuito: o pagamento fora do ar não derruba a lista de produtos. Só `GET` é repetido (2 vezes), porque repetir um `POST` pode criar dois pedidos. A rota de SSE fica fora do circuito: o tempo limite conta até a resposta começar, e um stream pode ficar calado até o primeiro evento.
 
-**Por que remover os headers que vêm de fora.** Os serviços de trás confiam em `X-User-Id` e `X-User-Roles` para saber quem está chamando. Se o gateway só repassasse o que recebe, bastaria escrever `X-User-Roles: admin` no `curl`. Por isso ele sempre apaga esses headers e recria a partir do token já validado, inclusive nas rotas públicas.
+**Por que remover os headers que vêm de fora.** Os serviços de trás confiam em `X-User-Id` e `X-User-Roles` para saber quem está chamando. Se o gateway só repassasse o que recebe, bastaria escrever `X-User-Roles: admin` no `curl`. Por isso ele sempre apaga esses headers e recria a partir do token já validado, inclusive nas rotas públicas. Tem um caminho menos óbvio para o mesmo ataque: o header `Connection` serve para listar headers que valem só até o próximo salto, e o gateway remove os listados antes de repassar. Quem chama podia escrever `Connection: X-User-Id` e fazer o gateway apagar o header que ele mesmo tinha acabado de escrever. Então o `Connection` é resolvido logo na entrada, antes de o gateway acrescentar qualquer coisa.
 
 **O emissor do token.** O token diz quem o emitiu no campo `iss`, e o gateway só aceita `http://localhost:8180/realms/store`, que é o endereço que o navegador usa. Só que dentro do Docker o gateway não alcança o Keycloak por `localhost:8180`; alcança por `keycloak:8080`. Resolvi nos dois lados. No Keycloak, `KC_HOSTNAME=http://localhost:8180` fixa o emissor, venha o pedido de onde vier, e `KC_HOSTNAME_BACKCHANNEL_DYNAMIC=true` mantém o acesso pelo nome interno. No gateway, `jwk-set-uri` aponta para `keycloak:8080` para buscar as chaves da assinatura e `issuer-uri` serve só para comparar com o `iss`. Com os dois configurados o Spring não tenta abrir o endereço do emissor ao subir. O `KeycloakIT` prova essa combinação com um Keycloak de verdade em porta aleatória.
+
+**As chaves do Keycloak ficam em memória.** O gateway baixa as chaves públicas uma vez e guarda. Um token com um `kid` que ele não conhece pode ser sinal de troca de chave, então ele baixa de novo, mas no máximo uma vez a cada 30 segundos. O decodificador padrão do Spring baixa a cada `kid` desconhecido, e aí cada requisição com um `kid` inventado vira uma chamada ao Keycloak. Também exijo `exp` e `sub`: o validador padrão só confere a validade quando o token traz a data.
 
 **Fechado por padrão.** O que não está na tabela de rotas é negado, e a rota interna de fallback não pode ser chamada de fora. Rota nova precisa de regra de acesso escrita.
 
@@ -151,5 +172,7 @@ Para ver o log de acesso: `docker compose logs api-gateway | grep access`.
 - Validar a audiência (`aud`) do token. O realm de exemplo não emite essa claim; eu criaria um mapper no Keycloak e passaria a exigir.
 - Atrás de um balanceador, tirar o IP do cliente do `X-Forwarded-For` de um proxy confiável. Hoje o limite sem login usa o endereço da conexão.
 - Um limite local, em memória, para quando o Redis estiver fora, em vez de liberar tudo.
+- Limitar por IP as chamadas recusadas com `401`. Hoje o limite roda depois do login, então quem insiste com token errado nunca recebe `429`.
+- Servir o Actuator em outra porta, só na rede interna. Hoje as métricas saem na porta pública; tirei delas os endereços dos serviços e do Redis, mas o volume por rota continua à vista.
 - Trace distribuído com OpenTelemetry. O correlation id já junta os logs, mas não mostra onde o tempo foi gasto.
 - Juntar no gateway a documentação OpenAPI dos serviços de trás, numa página só.
