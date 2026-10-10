@@ -1,5 +1,9 @@
 package io.github.jhonatasdefreitas.gateway;
 
+import static com.github.tomakehurst.wiremock.client.WireMock.getRequestedFor;
+import static com.github.tomakehurst.wiremock.client.WireMock.lessThanOrExactly;
+import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
+
 import java.time.Instant;
 import java.util.Date;
 
@@ -37,6 +41,20 @@ class TokenValidationIT extends IntegrationTestSupport {
     }
 
     @Test
+    void refusesATokenThatNeverExpires() {
+        String eternal = tokens.tokenFor(TestUser.ana(), claims -> claims.expirationTime(null));
+
+        expectUnauthorized("Bearer " + eternal);
+    }
+
+    @Test
+    void refusesATokenWithoutSubject() {
+        String nobody = tokens.tokenFor(TestUser.ana(), claims -> claims.subject(null));
+
+        expectUnauthorized("Bearer " + nobody);
+    }
+
+    @Test
     void refusesATokenSignedByAnotherKey() {
         String forged = tokens.withForgedKey().tokenFor(TestUser.admin());
 
@@ -57,6 +75,18 @@ class TokenValidationIT extends IntegrationTestSupport {
         String asAdmin = tokens.tokenFor(TestUser.admin()).split("\\.")[1];
 
         expectUnauthorized("Bearer " + parts[0] + "." + asAdmin + "." + parts[2]);
+    }
+
+    @Test
+    void madeUpKeyIdsDoNotBecomeCallsToKeycloak() {
+        keycloak.resetRequests();
+
+        for (int attempt = 1; attempt <= 10; attempt++) {
+            String stranger = tokens.withKeyId("made-up-" + attempt).tokenFor(TestUser.admin());
+            expectUnauthorized("Bearer " + stranger);
+        }
+
+        keycloak.verify(lessThanOrExactly(1), getRequestedFor(urlEqualTo(JWKS_PATH)));
     }
 
     @Test

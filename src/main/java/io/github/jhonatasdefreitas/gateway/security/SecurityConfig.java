@@ -2,7 +2,9 @@ package io.github.jhonatasdefreitas.gateway.security;
 
 import java.time.Duration;
 import java.util.List;
+import java.util.Objects;
 
+import org.springframework.boot.security.oauth2.server.resource.autoconfigure.OAuth2ResourceServerProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpHeaders;
@@ -13,6 +15,14 @@ import org.springframework.security.config.web.server.SecurityWebFiltersOrder;
 import org.springframework.security.config.web.server.ServerHttpSecurity;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
+import org.springframework.security.oauth2.core.OAuth2TokenValidator;
+import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.security.oauth2.jwt.JwtClaimNames;
+import org.springframework.security.oauth2.jwt.JwtClaimValidator;
+import org.springframework.security.oauth2.jwt.JwtIssuerValidator;
+import org.springframework.security.oauth2.jwt.JwtValidators;
+import org.springframework.security.oauth2.jwt.NimbusReactiveJwtDecoder;
+import org.springframework.security.oauth2.jwt.ReactiveJwtDecoder;
 import org.springframework.security.oauth2.server.resource.authentication.ReactiveJwtAuthenticationConverter;
 import org.springframework.security.web.server.SecurityWebFilterChain;
 import org.springframework.security.web.server.ServerAuthenticationEntryPoint;
@@ -72,6 +82,24 @@ class SecurityConfig {
                 // After authentication so the token is known, before authorization so a 403 is logged with its user.
                 .addFilterAfter(new UserHeadersFilter(), SecurityWebFiltersOrder.AUTHENTICATION)
                 .build();
+    }
+
+    @Bean
+    ReactiveJwtDecoder jwtDecoder(OAuth2ResourceServerProperties properties) {
+        OAuth2ResourceServerProperties.Jwt jwt = properties.getJwt();
+        NimbusReactiveJwtDecoder decoder = NimbusReactiveJwtDecoder.withJwkSource(KeycloakKeys.at(jwt.getJwkSetUri()))
+                .build();
+        // The default only checks "exp" when the token has one. Without it a token would never expire, and
+        // without "sub" a service would get a request from nobody.
+        decoder.setJwtValidator(JwtValidators.createDefaultWithValidators(
+                new JwtIssuerValidator(jwt.getIssuerUri()),
+                required(JwtClaimNames.EXP),
+                required(JwtClaimNames.SUB)));
+        return decoder;
+    }
+
+    private static OAuth2TokenValidator<Jwt> required(String claim) {
+        return new JwtClaimValidator<Object>(claim, Objects::nonNull);
     }
 
     private static ReactiveJwtAuthenticationConverter realmRolesConverter() {

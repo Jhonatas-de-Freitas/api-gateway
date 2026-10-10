@@ -40,6 +40,10 @@ final class TestTokens {
         return new TestTokens(key.getKeyID());
     }
 
+    TestTokens withKeyId(String keyId) {
+        return new TestTokens(keyId);
+    }
+
     String jwks() {
         return new JWKSet(key.toPublicJWK()).toString();
     }
