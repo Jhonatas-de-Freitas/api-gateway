@@ -18,14 +18,32 @@
       "name": "payment-service: payment of an order",
       "request": {
         "method": "GET",
-        "urlPath": "/payments/7c1f0a34-5b1d-4f6e-8a2b-9d3e4f5a6b7c"
+        "urlPathPattern": "/payments/(7c1f0a34-5b1d-4f6e-8a2b-9d3e4f5a6b7c|9a2b6f10-3c4d-4e5f-8a6b-7c8d9e0f1a2b|c4d5e6f7-1a2b-4c3d-9e8f-0a1b2c3d4e5f|e6f7a8b9-2c3d-4e4f-8a9b-1c2d3e4f5a6b)"
       },
       "response": {
         "status": 200,
         "headers": {
           "Content-Type": "application/json"
         },
-        "bodyFileName": "payments/payment.json"
+        "bodyFileName": "payments/{{request.pathSegments.[1]}}.json",
+        "transformers": [
+          "response-template"
+        ]
+      }
+    },
+    {
+      "name": "payment-service: an answer that takes 5 s, to show the time limit of the gateway",
+      "request": {
+        "method": "GET",
+        "urlPath": "/payments/slow"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "bodyFileName": "payments/7c1f0a34-5b1d-4f6e-8a2b-9d3e4f5a6b7c.json",
+        "fixedDelayMilliseconds": 5000
       }
     }
   ]

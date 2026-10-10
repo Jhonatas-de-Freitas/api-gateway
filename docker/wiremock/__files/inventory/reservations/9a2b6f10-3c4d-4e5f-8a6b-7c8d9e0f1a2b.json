@@ -1,0 +1,9 @@
+{
+  "orderId": "9a2b6f10-3c4d-4e5f-8a6b-7c8d9e0f1a2b",
+  "status": "RELEASED",
+  "items": [
+    { "productId": "55555555-5555-5555-5555-555555555555", "quantity": 1, "unitPrice": 7499.00 }
+  ],
+  "createdAt": "2026-10-10T14:10:06.214Z",
+  "releasedAt": "2026-10-10T14:10:07.105Z"
+}

@@ -15,17 +15,20 @@
       }
     },
     {
-      "name": "inventory-service: product by id",
+      "name": "inventory-service: product by id (the six sample ids are one digit repeated)",
       "request": {
         "method": "GET",
-        "urlPath": "/products/11111111-1111-1111-1111-111111111111"
+        "urlPathPattern": "/products/([1-6])\\1{7}(-\\1{4}){3}-\\1{12}"
       },
       "response": {
         "status": 200,
         "headers": {
           "Content-Type": "application/json"
         },
-        "bodyFileName": "inventory/product.json"
+        "bodyFileName": "inventory/products/{{request.pathSegments.[1]}}.json",
+        "transformers": [
+          "response-template"
+        ]
       }
     },
     {
@@ -37,37 +40,44 @@
       "response": {
         "status": 201,
         "headers": {
-          "Content-Type": "application/json"
+          "Content-Type": "application/json",
+          "Location": "/products/11111111-1111-1111-1111-111111111111"
         },
-        "bodyFileName": "inventory/product.json"
+        "bodyFileName": "inventory/products/11111111-1111-1111-1111-111111111111.json"
       }
     },
     {
-      "name": "inventory-service: set stock",
+      "name": "inventory-service: set stock (answers the product as it is in the sample)",
       "request": {
         "method": "PUT",
-        "urlPath": "/products/11111111-1111-1111-1111-111111111111/stock"
+        "urlPathPattern": "/products/([1-6])\\1{7}(-\\1{4}){3}-\\1{12}/stock"
       },
       "response": {
         "status": 200,
         "headers": {
           "Content-Type": "application/json"
         },
-        "bodyFileName": "inventory/product.json"
+        "bodyFileName": "inventory/products/{{request.pathSegments.[1]}}.json",
+        "transformers": [
+          "response-template"
+        ]
       }
     },
     {
       "name": "inventory-service: reservation of an order",
       "request": {
         "method": "GET",
-        "urlPath": "/reservations/7c1f0a34-5b1d-4f6e-8a2b-9d3e4f5a6b7c"
+        "urlPathPattern": "/reservations/(7c1f0a34-5b1d-4f6e-8a2b-9d3e4f5a6b7c|9a2b6f10-3c4d-4e5f-8a6b-7c8d9e0f1a2b|c4d5e6f7-1a2b-4c3d-9e8f-0a1b2c3d4e5f|e6f7a8b9-2c3d-4e4f-8a9b-1c2d3e4f5a6b)"
       },
       "response": {
         "status": 200,
         "headers": {
           "Content-Type": "application/json"
         },
-        "bodyFileName": "inventory/reservation.json"
+        "bodyFileName": "inventory/reservations/{{request.pathSegments.[1]}}.json",
+        "transformers": [
+          "response-template"
+        ]
       }
     }
   ]

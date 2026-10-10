@@ -1,0 +1,20 @@
+{
+  "id": "9a2b6f10-3c4d-4e5f-8a6b-7c8d9e0f1a2b",
+  "customerId": "c-1001",
+  "customerName": "Ana Souza",
+  "customerEmail": "ana@exemplo.com",
+  "status": "CANCELLED",
+  "totalAmount": 7499.00,
+  "cancellationReason": "PAYMENT_REFUSED",
+  "cancellationDetail": "Pagamento recusado: LIMIT_EXCEEDED",
+  "items": [
+    { "productId": "55555555-5555-5555-5555-555555555555", "productName": "Notebook Pro 16", "quantity": 1, "unitPrice": 7499.00 }
+  ],
+  "history": [
+    { "status": "PENDING", "occurredAt": "2026-10-10T14:10:05.480Z", "detail": "Pedido recebido" },
+    { "status": "STOCK_RESERVED", "occurredAt": "2026-10-10T14:10:06.214Z", "detail": "Estoque reservado" },
+    { "status": "CANCELLED", "occurredAt": "2026-10-10T14:10:06.912Z", "detail": "Pagamento recusado: LIMIT_EXCEEDED" }
+  ],
+  "createdAt": "2026-10-10T14:10:05.480Z",
+  "updatedAt": "2026-10-10T14:10:06.912Z"
+}

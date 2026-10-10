@@ -1,0 +1,20 @@
+{
+  "id": "c4d5e6f7-1a2b-4c3d-9e8f-0a1b2c3d4e5f",
+  "customerId": "c-1001",
+  "customerName": "Ana Souza",
+  "customerEmail": "ana@exemplo.com",
+  "status": "CONFIRMED",
+  "totalAmount": 2199.00,
+  "cancellationReason": null,
+  "cancellationDetail": null,
+  "items": [
+    { "productId": "33333333-3333-3333-3333-333333333333", "productName": "Monitor 27\" 4K", "quantity": 1, "unitPrice": 2199.00 }
+  ],
+  "history": [
+    { "status": "PENDING", "occurredAt": "2026-10-10T14:12:41.305Z", "detail": "Pedido recebido" },
+    { "status": "STOCK_RESERVED", "occurredAt": "2026-10-10T14:12:41.987Z", "detail": "Estoque reservado" },
+    { "status": "CONFIRMED", "occurredAt": "2026-10-10T14:12:42.644Z", "detail": "Pagamento aprovado" }
+  ],
+  "createdAt": "2026-10-10T14:12:41.305Z",
+  "updatedAt": "2026-10-10T14:12:42.644Z"
+}
