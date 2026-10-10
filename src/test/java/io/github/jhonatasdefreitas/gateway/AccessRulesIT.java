@@ -1,9 +1,11 @@
 package io.github.jhonatasdefreitas.gateway;
 
+import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
 import static com.github.tomakehurst.wiremock.client.WireMock.anyRequestedFor;
 import static com.github.tomakehurst.wiremock.client.WireMock.anyUrl;
 import static com.github.tomakehurst.wiremock.client.WireMock.equalToJson;
 import static com.github.tomakehurst.wiremock.client.WireMock.getRequestedFor;
+import static com.github.tomakehurst.wiremock.client.WireMock.post;
 import static com.github.tomakehurst.wiremock.client.WireMock.putRequestedFor;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -146,6 +148,27 @@ class AccessRulesIT extends IntegrationTestSupport {
         service.verify(1, getRequestedFor(urlEqualTo(servicePath)));
         assertThat(services).filteredOn(other -> other != service)
                 .allSatisfy(other -> other.verify(0, anyRequestedFor(anyUrl())));
+    }
+
+    @Test
+    void locationOfANewOrderIsAPathOfTheGateway() {
+        orderService.stubFor(post("/orders").willReturn(aResponse().withStatus(202)
+                .withHeader(HttpHeaders.LOCATION, "/orders/" + ORDER)));
+
+        String location = client.post().uri("/api/orders")
+                .header(HttpHeaders.AUTHORIZATION, bearer(TestUser.ana()))
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue("{}")
+                .exchange()
+                .expectStatus().isAccepted()
+                .expectHeader().valueEquals(HttpHeaders.LOCATION, "/api/orders/" + ORDER)
+                .returnResult(Void.class)
+                .getResponseHeaders().getFirst(HttpHeaders.LOCATION);
+
+        client.get().uri(location)
+                .header(HttpHeaders.AUTHORIZATION, bearer(TestUser.ana()))
+                .exchange()
+                .expectStatus().isOk();
     }
 
     @ParameterizedTest

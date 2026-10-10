@@ -10,6 +10,7 @@ import org.springframework.cloud.gateway.route.builder.GatewayFilterSpec;
 import org.springframework.cloud.gateway.route.builder.RouteLocatorBuilder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 
@@ -66,6 +67,8 @@ class Routes {
      */
     private static GatewayFilterSpec guarded(GatewayFilterSpec filters, String service, GatewayFilter rateLimit) {
         return filters.stripPrefix(1)
+                // The services do not know about /api: a Location they answer gets the prefix back.
+                .rewriteResponseHeader(HttpHeaders.LOCATION, "^/", "/api/")
                 .filter(rateLimit)
                 .circuitBreaker(breaker -> breaker.setName(service).setFallbackUri(ServiceFallback.uriFor(service)))
                 .retry(retry -> retry.setRetries(2)
