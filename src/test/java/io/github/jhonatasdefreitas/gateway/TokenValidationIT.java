@@ -1,10 +1,5 @@
 package io.github.jhonatasdefreitas.gateway;
 
-import static com.github.tomakehurst.wiremock.client.WireMock.any;
-import static com.github.tomakehurst.wiremock.client.WireMock.anyRequestedFor;
-import static com.github.tomakehurst.wiremock.client.WireMock.anyUrl;
-import static com.github.tomakehurst.wiremock.client.WireMock.okJson;
-
 import java.time.Instant;
 import java.util.Date;
 
@@ -17,13 +12,13 @@ import org.springframework.http.HttpStatus;
 class TokenValidationIT extends IntegrationTestSupport {
 
     @BeforeEach
-    void serviceAnswersAnything() {
-        backend.stubFor(any(anyUrl()).willReturn(okJson("{}")));
+    void servicesAreUp() {
+        servicesAnswerAnything();
     }
 
     @AfterEach
-    void nothingReachedTheService() {
-        backend.verify(0, anyRequestedFor(anyUrl()));
+    void nothingReachedTheServices() {
+        verifyNoServiceWasCalled();
     }
 
     @Test

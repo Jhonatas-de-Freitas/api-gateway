@@ -1,30 +1,37 @@
 package io.github.jhonatasdefreitas.gateway;
 
-import static com.github.tomakehurst.wiremock.client.WireMock.any;
 import static com.github.tomakehurst.wiremock.client.WireMock.anyRequestedFor;
 import static com.github.tomakehurst.wiremock.client.WireMock.anyUrl;
 import static com.github.tomakehurst.wiremock.client.WireMock.equalToJson;
 import static com.github.tomakehurst.wiremock.client.WireMock.getRequestedFor;
-import static com.github.tomakehurst.wiremock.client.WireMock.okJson;
 import static com.github.tomakehurst.wiremock.client.WireMock.putRequestedFor;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Named.named;
+import static org.junit.jupiter.params.provider.Arguments.arguments;
+
+import java.util.stream.Stream;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.CsvSource;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 
+import com.github.tomakehurst.wiremock.WireMockServer;
+
 class AccessRulesIT extends IntegrationTestSupport {
 
     private static final String KEYBOARD = "11111111-1111-1111-1111-111111111111";
+    private static final String ORDER = "7c1f0a34-5b1d-4f6e-8a2b-9d3e4f5a6b7c";
 
     @BeforeEach
-    void servicesAnswerAnything() {
-        backend.stubFor(any(anyUrl()).willReturn(okJson("{}")));
-        paymentService.stubFor(any(anyUrl()).willReturn(okJson("{}")));
+    void servicesAreUp() {
+        servicesAnswerAnything();
     }
 
     @Test
@@ -37,15 +44,15 @@ class AccessRulesIT extends IntegrationTestSupport {
                 .exchange()
                 .expectStatus().isOk();
 
-        backend.verify(getRequestedFor(urlEqualTo("/products")));
-        backend.verify(getRequestedFor(urlEqualTo("/products/" + KEYBOARD)));
+        inventoryService.verify(getRequestedFor(urlEqualTo("/products")));
+        inventoryService.verify(getRequestedFor(urlEqualTo("/products/" + KEYBOARD)));
     }
 
     @Test
     void ordersNeedALogin() {
         expectProblem(client.get().uri("/api/orders").exchange(), HttpStatus.UNAUTHORIZED, "/api/orders");
 
-        backend.verify(0, anyRequestedFor(anyUrl()));
+        verifyNoServiceWasCalled();
     }
 
     @Test
@@ -55,7 +62,7 @@ class AccessRulesIT extends IntegrationTestSupport {
                 .exchange()
                 .expectStatus().isOk();
 
-        backend.verify(getRequestedFor(urlEqualTo("/orders?status=CONFIRMED&page=0&size=20")));
+        orderService.verify(getRequestedFor(urlEqualTo("/orders?status=CONFIRMED&page=0&size=20")));
     }
 
     @Test
@@ -66,7 +73,7 @@ class AccessRulesIT extends IntegrationTestSupport {
                 .bodyValue("{\"availableQuantity\": 50}")
                 .exchange(), HttpStatus.FORBIDDEN, "/api/products/" + KEYBOARD + "/stock");
 
-        backend.verify(0, anyRequestedFor(anyUrl()));
+        verifyNoServiceWasCalled();
     }
 
     @Test
@@ -78,7 +85,7 @@ class AccessRulesIT extends IntegrationTestSupport {
                 .exchange()
                 .expectStatus().isOk();
 
-        backend.verify(putRequestedFor(urlEqualTo("/products/" + KEYBOARD + "/stock"))
+        inventoryService.verify(putRequestedFor(urlEqualTo("/products/" + KEYBOARD + "/stock"))
                 .withRequestBody(equalToJson("{\"availableQuantity\": 50}")));
     }
 
@@ -95,7 +102,7 @@ class AccessRulesIT extends IntegrationTestSupport {
                 .bodyValue("{}")
                 .exchange(), HttpStatus.FORBIDDEN, "/api/products");
 
-        backend.verify(0, anyRequestedFor(anyUrl()));
+        verifyNoServiceWasCalled();
     }
 
     @Test
@@ -109,17 +116,25 @@ class AccessRulesIT extends IntegrationTestSupport {
                 .exchange()
                 .expectStatus().isOk();
 
-        backend.verify(1, getRequestedFor(urlEqualTo("/analytics/summary")));
+        orderAnalytics.verify(1, getRequestedFor(urlEqualTo("/analytics/summary")));
+    }
+
+    static Stream<Arguments> loggedInRoutes() {
+        return Stream.of(
+                arguments("/api/orders/" + ORDER, named("order-service", orderService), "/orders/" + ORDER),
+                arguments("/api/reservations/" + ORDER, named("inventory-service", inventoryService),
+                        "/reservations/" + ORDER),
+                arguments("/api/payments/" + ORDER, named("payment-service", paymentService), "/payments/" + ORDER),
+                arguments("/api/notifications?userId=c-1001", named("notification-service", notificationService),
+                        "/notifications?userId=c-1001"),
+                arguments("/api/preferences/c-1001", named("notification-service", notificationService),
+                        "/preferences/c-1001"));
     }
 
     @ParameterizedTest
-    @CsvSource(textBlock = """
-            /api/orders/7c1f0a34-5b1d-4f6e-8a2b-9d3e4f5a6b7c, /orders/7c1f0a34-5b1d-4f6e-8a2b-9d3e4f5a6b7c
-            /api/reservations/7c1f0a34-5b1d-4f6e-8a2b-9d3e4f5a6b7c, /reservations/7c1f0a34-5b1d-4f6e-8a2b-9d3e4f5a6b7c
-            /api/notifications?userId=c-1001, /notifications?userId=c-1001
-            /api/preferences/c-1001, /preferences/c-1001
-            """)
-    void loggedInRoutesDropTheApiPrefix(String gatewayPath, String servicePath) {
+    @MethodSource("loggedInRoutes")
+    void loggedInRoutesReachTheirServiceWithoutTheApiPrefix(String gatewayPath, WireMockServer service,
+            String servicePath) {
         expectProblem(client.get().uri(gatewayPath).exchange(), HttpStatus.UNAUTHORIZED,
                 gatewayPath.replaceFirst("\\?.*", ""));
 
@@ -128,20 +143,9 @@ class AccessRulesIT extends IntegrationTestSupport {
                 .exchange()
                 .expectStatus().isOk();
 
-        backend.verify(1, getRequestedFor(urlEqualTo(servicePath)));
-    }
-
-    @Test
-    void paymentsGoToThePaymentService() {
-        expectProblem(client.get().uri("/api/payments").exchange(), HttpStatus.UNAUTHORIZED, "/api/payments");
-
-        client.get().uri("/api/payments/7c1f0a34-5b1d-4f6e-8a2b-9d3e4f5a6b7c")
-                .header(HttpHeaders.AUTHORIZATION, bearer(TestUser.ana()))
-                .exchange()
-                .expectStatus().isOk();
-
-        paymentService.verify(1, getRequestedFor(urlEqualTo("/payments/7c1f0a34-5b1d-4f6e-8a2b-9d3e4f5a6b7c")));
-        backend.verify(0, anyRequestedFor(anyUrl()));
+        service.verify(1, getRequestedFor(urlEqualTo(servicePath)));
+        assertThat(services).filteredOn(other -> other != service)
+                .allSatisfy(other -> other.verify(0, anyRequestedFor(anyUrl())));
     }
 
     @ParameterizedTest
@@ -153,7 +157,7 @@ class AccessRulesIT extends IntegrationTestSupport {
                 .header(HttpHeaders.AUTHORIZATION, bearer(TestUser.admin()))
                 .exchange(), HttpStatus.FORBIDDEN, path);
 
-        backend.verify(0, anyRequestedFor(anyUrl()));
+        verifyNoServiceWasCalled();
     }
 
     @Test

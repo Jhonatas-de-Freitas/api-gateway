@@ -1,11 +1,15 @@
 package io.github.jhonatasdefreitas.gateway;
 
+import static com.github.tomakehurst.wiremock.client.WireMock.any;
+import static com.github.tomakehurst.wiremock.client.WireMock.anyRequestedFor;
+import static com.github.tomakehurst.wiremock.client.WireMock.anyUrl;
 import static com.github.tomakehurst.wiremock.client.WireMock.get;
 import static com.github.tomakehurst.wiremock.client.WireMock.okJson;
 import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.options;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.Duration;
+import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,10 +33,7 @@ import com.jayway.jsonpath.JsonPath;
 import io.github.resilience4j.circuitbreaker.CircuitBreaker;
 import io.github.resilience4j.circuitbreaker.CircuitBreakerRegistry;
 
-/**
- * The gateway on a real port, with a real Redis, in front of WireMock servers that play the services
- * behind it and the Keycloak key endpoint. Every subclass shares the same application context.
- */
+// Every subclass shares one application context: the gateway on a real port, with a real Redis.
 @SpringBootTest(webEnvironment = WebEnvironment.RANDOM_PORT)
 @Import(TestcontainersConfiguration.class)
 @Testcontainers(disabledWithoutDocker = true)
@@ -40,30 +41,35 @@ abstract class IntegrationTestSupport {
 
     static final String CORRELATION_ID = "X-Correlation-Id";
 
-    private static final String JWKS_PATH = "/realms/store/protocol/openid-connect/certs";
+    static final String JWKS_PATH = "/realms/store/protocol/openid-connect/certs";
 
-    // Fixed ports, so a server that a test takes down comes back at the same address.
-    static final WireMockServer backend = new WireMockServer(options().port(TestSocketUtils.findAvailableTcpPort()));
-    static final WireMockServer paymentService = new WireMockServer(
-            options().port(TestSocketUtils.findAvailableTcpPort()));
+    // One server per service, so a route that points at the wrong one fails a test.
+    static final WireMockServer orderService = service();
+    static final WireMockServer inventoryService = service();
+    static final WireMockServer paymentService = service();
+    static final WireMockServer notificationService = service();
+    static final WireMockServer orderAnalytics = service();
+
+    static final List<WireMockServer> services = List.of(orderService, inventoryService, paymentService,
+            notificationService, orderAnalytics);
+
     static final WireMockServer keycloak = new WireMockServer(options().dynamicPort());
 
     static final TestTokens tokens = new TestTokens();
 
     static {
-        backend.start();
-        paymentService.start();
+        services.forEach(WireMockServer::start);
         keycloak.start();
         keycloak.stubFor(get(JWKS_PATH).willReturn(okJson(tokens.jwks())));
     }
 
     @DynamicPropertySource
     static void gatewayProperties(DynamicPropertyRegistry registry) {
-        registry.add("gateway.services.order", backend::baseUrl);
-        registry.add("gateway.services.inventory", backend::baseUrl);
-        registry.add("gateway.services.notification", backend::baseUrl);
-        registry.add("gateway.services.analytics", backend::baseUrl);
+        registry.add("gateway.services.order", orderService::baseUrl);
+        registry.add("gateway.services.inventory", inventoryService::baseUrl);
         registry.add("gateway.services.payment", paymentService::baseUrl);
+        registry.add("gateway.services.notification", notificationService::baseUrl);
+        registry.add("gateway.services.analytics", orderAnalytics::baseUrl);
         registry.add("spring.security.oauth2.resourceserver.jwt.jwk-set-uri", () -> keycloak.baseUrl() + JWKS_PATH);
         registry.add("resilience4j.timelimiter.configs.default.timeout-duration", () -> "1s");
         registry.add("resilience4j.circuitbreaker.configs.default.wait-duration-in-open-state", () -> "1s");
@@ -79,13 +85,25 @@ abstract class IntegrationTestSupport {
 
     @BeforeEach
     void startFromACleanState() {
-        backend.resetAll();
-        paymentService.resetAll();
+        services.forEach(WireMockServer::resetAll);
         circuitBreakers.getAllCircuitBreakers().forEach(CircuitBreaker::reset);
         client = WebTestClient.bindToServer()
                 .baseUrl("http://localhost:" + port)
                 .responseTimeout(Duration.ofSeconds(15))
                 .build();
+    }
+
+    // A fixed port, so a server that a test takes down comes back at the same address.
+    private static WireMockServer service() {
+        return new WireMockServer(options().port(TestSocketUtils.findAvailableTcpPort()));
+    }
+
+    static void servicesAnswerAnything() {
+        services.forEach(service -> service.stubFor(any(anyUrl()).willReturn(okJson("{}"))));
+    }
+
+    static void verifyNoServiceWasCalled() {
+        services.forEach(service -> service.verify(0, anyRequestedFor(anyUrl())));
     }
 
     static String bearer(TestUser user) {

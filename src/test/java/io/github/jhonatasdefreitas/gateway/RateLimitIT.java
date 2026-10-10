@@ -1,9 +1,6 @@
 package io.github.jhonatasdefreitas.gateway;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
-import static com.github.tomakehurst.wiremock.client.WireMock.any;
-import static com.github.tomakehurst.wiremock.client.WireMock.anyUrl;
-import static com.github.tomakehurst.wiremock.client.WireMock.okJson;
 import static com.github.tomakehurst.wiremock.client.WireMock.post;
 import static com.github.tomakehurst.wiremock.client.WireMock.postRequestedFor;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
@@ -19,10 +16,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.reactive.server.EntityExchangeResult;
 
-/**
- * Runs with the limits of the contract: 2 orders per second with a burst of 5, and 20 per second with a
- * burst of 40 for everything else.
- */
+// The limits here are the ones of the contract: 2 orders per second with a burst of 5, and 20 per second
+// with a burst of 40 for everything else.
 class RateLimitIT extends IntegrationTestSupport {
 
     private static final String ORDER = """
@@ -32,8 +27,8 @@ class RateLimitIT extends IntegrationTestSupport {
 
     @BeforeEach
     void serviceAcceptsOrders() {
-        backend.stubFor(any(anyUrl()).willReturn(okJson("{}")));
-        backend.stubFor(post("/orders").willReturn(aResponse().withStatus(202)
+        servicesAnswerAnything();
+        orderService.stubFor(post("/orders").willReturn(aResponse().withStatus(202)
                 .withHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
                 .withBody("{ \"status\": \"PENDING\" }")));
     }
@@ -65,7 +60,7 @@ class RateLimitIT extends IntegrationTestSupport {
         assertThat(headers.getFirst("X-RateLimit-Burst-Capacity")).isEqualTo("5");
         assertThat(headers.getFirst("X-RateLimit-Replenish-Rate")).isEqualTo("2");
         assertThat(headers.getFirst(HttpHeaders.RETRY_AFTER)).isEqualTo("1");
-        backend.verify(accepted, postRequestedFor(urlEqualTo("/orders")));
+        orderService.verify(accepted, postRequestedFor(urlEqualTo("/orders")));
     }
 
     @Test

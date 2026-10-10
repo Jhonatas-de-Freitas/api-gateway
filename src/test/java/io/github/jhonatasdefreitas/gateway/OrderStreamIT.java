@@ -20,16 +20,13 @@ import com.github.tomakehurst.wiremock.client.ResponseDefinitionBuilder;
 
 import reactor.core.publisher.Timed;
 
-/**
- * The other routes of this context give up on a service after 1 s.
- */
 class OrderStreamIT extends IntegrationTestSupport {
 
     private static final int EVENTS = 5;
 
     @Test
     void relaysEachEventAsItComes() {
-        backend.stubFor(get("/orders/stream").willReturn(eventsSpreadOver(3000)));
+        orderService.stubFor(get("/orders/stream").willReturn(eventsSpreadOver(3000)));
 
         List<Timed<ServerSentEvent<String>>> received = openStream();
 
@@ -50,7 +47,8 @@ class OrderStreamIT extends IntegrationTestSupport {
 
     @Test
     void waitsForAStreamThatTakesLongToSayAnything() {
-        backend.stubFor(get("/orders/stream").willReturn(eventsSpreadOver(500).withFixedDelay(2500)));
+        // The other routes of this context give up on a service after 1 s.
+        orderService.stubFor(get("/orders/stream").willReturn(eventsSpreadOver(500).withFixedDelay(2500)));
 
         assertThat(openStream()).hasSize(EVENTS);
     }

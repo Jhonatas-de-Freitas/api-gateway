@@ -22,14 +22,11 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.reactive.server.WebTestClient;
 
+import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.stubbing.Scenario;
 
 import io.github.resilience4j.circuitbreaker.CircuitBreaker;
 
-/**
- * The test context runs with a 1 s time limit per call, and an open circuit lets a trial call through
- * after 1 s.
- */
 class CircuitBreakerIT extends IntegrationTestSupport {
 
     private static final String PAYMENT = "/api/payments/7c1f0a34-5b1d-4f6e-8a2b-9d3e4f5a6b7c";
@@ -38,12 +35,9 @@ class CircuitBreakerIT extends IntegrationTestSupport {
 
     @AfterEach
     void bringServicesBack() {
-        if (!paymentService.isRunning()) {
-            paymentService.start();
-        }
-        if (!backend.isRunning()) {
-            backend.start();
-        }
+        services.stream()
+                .filter(service -> !service.isRunning())
+                .forEach(WireMockServer::start);
     }
 
     @Test
@@ -60,6 +54,7 @@ class CircuitBreakerIT extends IntegrationTestSupport {
         paymentService.start();
         paymentService.stubFor(any(anyUrl()).willReturn(okJson("{}")));
 
+        // In this context an open circuit lets a trial call through after 1 s.
         await().atMost(Duration.ofSeconds(10))
                 .pollInterval(Duration.ofMillis(200))
                 .untilAsserted(() -> {
@@ -82,7 +77,7 @@ class CircuitBreakerIT extends IntegrationTestSupport {
 
     @Test
     void oneServiceDownDoesNotTakeTheOthersWithIt() {
-        backend.stubFor(any(anyUrl()).willReturn(okJson("{}")));
+        servicesAnswerAnything();
         paymentService.stop();
 
         for (int call = 0; call < 5; call++) {
@@ -95,7 +90,8 @@ class CircuitBreakerIT extends IntegrationTestSupport {
 
     @Test
     void cutsACallThatTakesLongerThanTheTimeLimit() {
-        backend.stubFor(get("/orders/slow").willReturn(okJson("{}").withFixedDelay(5000)));
+        // This context gives a service 1 s to answer.
+        orderService.stubFor(get("/orders/slow").willReturn(okJson("{}").withFixedDelay(5000)));
 
         long startedAt = System.nanoTime();
         expectProblem(call("/api/orders/slow"), HttpStatus.SERVICE_UNAVAILABLE, "/api/orders/slow");
@@ -107,22 +103,22 @@ class CircuitBreakerIT extends IntegrationTestSupport {
 
     @Test
     void retriesAGetThatFailedOnce() {
-        backend.stubFor(get("/products").inScenario("hiccup")
+        inventoryService.stubFor(get("/products").inScenario("hiccup")
                 .whenScenarioStateIs(Scenario.STARTED)
                 .willReturn(serviceUnavailable())
                 .willSetStateTo("recovered"));
-        backend.stubFor(get("/products").inScenario("hiccup")
+        inventoryService.stubFor(get("/products").inScenario("hiccup")
                 .whenScenarioStateIs("recovered")
                 .willReturn(okJson("[]")));
 
         call("/api/products").expectStatus().isOk();
 
-        backend.verify(2, getRequestedFor(urlEqualTo("/products")));
+        inventoryService.verify(2, getRequestedFor(urlEqualTo("/products")));
     }
 
     @Test
     void neverRetriesAPost() {
-        backend.stubFor(post("/notifications").willReturn(serviceUnavailable()));
+        notificationService.stubFor(post("/notifications").willReturn(serviceUnavailable()));
 
         client.post().uri("/api/notifications")
                 .header(HttpHeaders.AUTHORIZATION, ana)
@@ -131,12 +127,12 @@ class CircuitBreakerIT extends IntegrationTestSupport {
                 .exchange()
                 .expectStatus().isEqualTo(HttpStatus.SERVICE_UNAVAILABLE);
 
-        backend.verify(1, postRequestedFor(urlEqualTo("/notifications")));
+        notificationService.verify(1, postRequestedFor(urlEqualTo("/notifications")));
     }
 
     @Test
     void streamRouteAlsoAnswers503WhenTheServiceIsDown() {
-        backend.stop();
+        orderService.stop();
 
         expectProblem(call("/api/orders/stream"), HttpStatus.SERVICE_UNAVAILABLE, "/api/orders/stream");
     }

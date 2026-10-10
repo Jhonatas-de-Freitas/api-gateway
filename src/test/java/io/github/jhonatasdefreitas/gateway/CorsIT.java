@@ -1,9 +1,5 @@
 package io.github.jhonatasdefreitas.gateway;
 
-import static com.github.tomakehurst.wiremock.client.WireMock.any;
-import static com.github.tomakehurst.wiremock.client.WireMock.anyRequestedFor;
-import static com.github.tomakehurst.wiremock.client.WireMock.anyUrl;
-import static com.github.tomakehurst.wiremock.client.WireMock.okJson;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -17,8 +13,8 @@ class CorsIT extends IntegrationTestSupport {
     private static final String SOMEWHERE_ELSE = "http://localhost:3000";
 
     @BeforeEach
-    void serviceAnswersAnything() {
-        backend.stubFor(any(anyUrl()).willReturn(okJson("{}")));
+    void servicesAreUp() {
+        servicesAnswerAnything();
     }
 
     @Test
@@ -35,7 +31,7 @@ class CorsIT extends IntegrationTestSupport {
                 .expectHeader().value(HttpHeaders.ACCESS_CONTROL_ALLOW_HEADERS,
                         headers -> assertThat(headers).containsIgnoringCase("authorization"));
 
-        backend.verify(0, anyRequestedFor(anyUrl()));
+        verifyNoServiceWasCalled();
     }
 
     @Test
@@ -67,7 +63,7 @@ class CorsIT extends IntegrationTestSupport {
                 .expectStatus().isEqualTo(HttpStatus.FORBIDDEN)
                 .expectHeader().doesNotExist(HttpHeaders.ACCESS_CONTROL_ALLOW_ORIGIN);
 
-        backend.verify(0, anyRequestedFor(anyUrl()));
+        verifyNoServiceWasCalled();
     }
 
     @Test
