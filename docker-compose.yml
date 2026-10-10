@@ -1,0 +1,78 @@
+name: api-gateway
+
+services:
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.8.0
+    command: ["start-dev", "--import-realm"]
+    environment:
+      KC_BOOTSTRAP_ADMIN_USERNAME: admin
+      KC_BOOTSTRAP_ADMIN_PASSWORD: admin
+      # Tokens always carry the address the browser uses, whoever asks for them. Dynamic backchannel
+      # lets the other containers still reach Keycloak as keycloak:8080.
+      KC_HOSTNAME: http://localhost:8180
+      KC_HOSTNAME_BACKCHANNEL_DYNAMIC: "true"
+    ports:
+      - "8180:8080"
+    volumes:
+      - ./docker/keycloak/store-realm.json:/opt/keycloak/data/import/store-realm.json:ro
+    healthcheck:
+      # The image has neither curl nor wget, so bash speaks HTTP. A 200 means the realm is imported.
+      test:
+        - CMD
+        - bash
+        - -c
+        - >-
+          exec 3<>/dev/tcp/127.0.0.1/8080
+          && printf 'GET /realms/store HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n' >&3
+          && read -r status <&3
+          && [[ $$status == *' 200 '* ]]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+      start_period: 30s
+
+  redis:
+    image: redis:8-alpine
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+
+  # Plays every service behind the gateway, with sample answers in the format of each API.
+  wiremock:
+    image: wiremock/wiremock:3.13.2
+    ports:
+      - "8089:8080"
+    volumes:
+      - ./docker/wiremock/mappings:/home/wiremock/mappings:ro
+      - ./docker/wiremock/__files:/home/wiremock/__files:ro
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "-o", "/dev/null", "http://localhost:8080/__admin/health"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+
+  api-gateway:
+    build: .
+    depends_on:
+      keycloak:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      wiremock:
+        condition: service_healthy
+    environment:
+      # The issuer is what the token says (the public address); the keys come from inside the network.
+      KEYCLOAK_ISSUER_URI: http://localhost:8180/realms/store
+      KEYCLOAK_JWK_SET_URI: http://keycloak:8080/realms/store/protocol/openid-connect/certs
+      REDIS_HOST: redis
+      ORDER_SERVICE_URL: http://wiremock:8080
+      INVENTORY_SERVICE_URL: http://wiremock:8080
+      PAYMENT_SERVICE_URL: http://wiremock:8080
+      NOTIFICATION_SERVICE_URL: http://wiremock:8080
+      ORDER_ANALYTICS_URL: http://wiremock:8080
+    ports:
+      - "8080:8080"

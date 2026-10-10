@@ -1,0 +1,74 @@
+{
+  "mappings": [
+    {
+      "name": "notification-service: send notification",
+      "request": {
+        "method": "POST",
+        "urlPathPattern": "/notifications/?"
+      },
+      "response": {
+        "status": 202,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "bodyFileName": "notifications/accepted.json"
+      }
+    },
+    {
+      "name": "notification-service: list notifications",
+      "request": {
+        "method": "GET",
+        "urlPathPattern": "/notifications/?"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "bodyFileName": "notifications/page.json"
+      }
+    },
+    {
+      "name": "notification-service: notification by id",
+      "request": {
+        "method": "GET",
+        "urlPath": "/notifications/5e0c7d1a-8b2f-4a3c-9d4e-6f7a8b9c0d1e"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "bodyFileName": "notifications/notification.json"
+      }
+    },
+    {
+      "name": "notification-service: read preferences",
+      "request": {
+        "method": "GET",
+        "urlPath": "/preferences/c-1001"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "bodyFileName": "notifications/preferences.json"
+      }
+    },
+    {
+      "name": "notification-service: save preferences",
+      "request": {
+        "method": "PUT",
+        "urlPath": "/preferences/c-1001"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "bodyFileName": "notifications/preferences.json"
+      }
+    }
+  ]
+}

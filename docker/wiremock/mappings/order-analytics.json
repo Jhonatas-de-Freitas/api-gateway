@@ -1,0 +1,89 @@
+{
+  "mappings": [
+    {
+      "name": "order-analytics: summary",
+      "request": {
+        "method": "GET",
+        "urlPath": "/analytics/summary"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "bodyFileName": "analytics/summary.json"
+      }
+    },
+    {
+      "name": "order-analytics: orders by status",
+      "request": {
+        "method": "GET",
+        "urlPath": "/analytics/orders-by-status"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "bodyFileName": "analytics/orders-by-status.json"
+      }
+    },
+    {
+      "name": "order-analytics: revenue",
+      "request": {
+        "method": "GET",
+        "urlPath": "/analytics/revenue"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "bodyFileName": "analytics/revenue.json"
+      }
+    },
+    {
+      "name": "order-analytics: cancellations",
+      "request": {
+        "method": "GET",
+        "urlPath": "/analytics/cancellations"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "bodyFileName": "analytics/cancellations.json"
+      }
+    },
+    {
+      "name": "order-analytics: top products",
+      "request": {
+        "method": "GET",
+        "urlPath": "/analytics/top-products"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "bodyFileName": "analytics/top-products.json"
+      }
+    },
+    {
+      "name": "order-analytics: orders report",
+      "request": {
+        "method": "GET",
+        "urlPath": "/analytics/reports/orders.csv"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "text/csv; charset=utf-8",
+          "Content-Disposition": "attachment; filename=\"orders.csv\""
+        },
+        "bodyFileName": "analytics/orders.csv"
+      }
+    }
+  ]
+}

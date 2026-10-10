@@ -1,0 +1,7 @@
+{
+  "requestId": "2f6b8d0a-4c1e-4a7b-9e3d-5a7c9e1b3d5f",
+  "notifications": [
+    { "id": "5e0c7d1a-8b2f-4a3c-9d4e-6f7a8b9c0d1e", "channel": "EMAIL", "status": "PENDING" },
+    { "id": "8a1c3e5b-7d9f-4b2a-8c4e-6a8c0e2b4d6f", "channel": "PUSH", "status": "PENDING" }
+  ]
+}

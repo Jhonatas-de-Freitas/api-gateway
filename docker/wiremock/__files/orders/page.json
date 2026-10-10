@@ -1,0 +1,28 @@
+{
+  "content": [
+    {
+      "id": "9a2b6f10-3c4d-4e5f-8a6b-7c8d9e0f1a2b",
+      "customerId": "c-1001",
+      "customerName": "Ana Souza",
+      "status": "CANCELLED",
+      "totalAmount": 7499.00,
+      "itemCount": 1,
+      "createdAt": "2026-10-10T14:10:05.480Z",
+      "updatedAt": "2026-10-10T14:10:06.912Z"
+    },
+    {
+      "id": "7c1f0a34-5b1d-4f6e-8a2b-9d3e4f5a6b7c",
+      "customerId": "c-1001",
+      "customerName": "Ana Souza",
+      "status": "CONFIRMED",
+      "totalAmount": 699.80,
+      "itemCount": 1,
+      "createdAt": "2026-10-10T14:03:22.123Z",
+      "updatedAt": "2026-10-10T14:03:23.870Z"
+    }
+  ],
+  "page": 0,
+  "size": 20,
+  "totalElements": 2,
+  "totalPages": 1
+}

@@ -1,0 +1,10 @@
+{
+  "totalOrders": 128,
+  "confirmed": 97,
+  "cancelled": 26,
+  "inProgress": 5,
+  "confirmedRevenue": 84077.00,
+  "approvalRate": 0.89,
+  "averageSecondsToConfirm": 1.8,
+  "lastEventAt": "2026-10-10T14:15:19.336Z"
+}

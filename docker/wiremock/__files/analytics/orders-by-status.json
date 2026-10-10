@@ -1,0 +1,6 @@
+[
+  { "status": "CONFIRMED", "count": 97 },
+  { "status": "CANCELLED", "count": 26 },
+  { "status": "STOCK_RESERVED", "count": 2 },
+  { "status": "PENDING", "count": 3 }
+]

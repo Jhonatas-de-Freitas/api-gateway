@@ -1,0 +1,9 @@
+event: order-updated
+data: {"id":"c4d5e6f7-1a2b-4c3d-9e8f-0a1b2c3d4e5f","customerId":"c-1001","customerName":"Ana Souza","status":"CONFIRMED","totalAmount":2199.00,"itemCount":1,"createdAt":"2026-10-10T14:12:41.305Z","updatedAt":"2026-10-10T14:12:42.644Z"}
+
+event: order-updated
+data: {"id":"9a2b6f10-3c4d-4e5f-8a6b-7c8d9e0f1a2b","customerId":"c-1001","customerName":"Ana Souza","status":"CANCELLED","totalAmount":7499.00,"itemCount":1,"createdAt":"2026-10-10T14:10:05.480Z","updatedAt":"2026-10-10T14:10:06.912Z"}
+
+event: order-updated
+data: {"id":"e6f7a8b9-2c3d-4e4f-8a9b-1c2d3e4f5a6b","customerId":"c-1001","customerName":"Ana Souza","status":"CONFIRMED","totalAmount":1049.70,"itemCount":1,"createdAt":"2026-10-10T14:15:18.027Z","updatedAt":"2026-10-10T14:15:19.336Z"}
+

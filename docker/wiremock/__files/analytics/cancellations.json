@@ -1,0 +1,4 @@
+[
+  { "reason": "OUT_OF_STOCK", "count": 14 },
+  { "reason": "PAYMENT_REFUSED", "count": 12 }
+]

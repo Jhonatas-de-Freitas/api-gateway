@@ -1,0 +1,25 @@
+{
+  "content": [
+    {
+      "id": "5e0c7d1a-8b2f-4a3c-9d4e-6f7a8b9c0d1e",
+      "userId": "c-1001",
+      "orderId": "7c1f0a34-5b1d-4f6e-8a2b-9d3e4f5a6b7c",
+      "channel": "EMAIL",
+      "template": "ORDER_CONFIRMED",
+      "recipient": { "name": "Ana Souza", "email": "ana@exemplo.com", "phone": null, "deviceToken": "device-c-1001" },
+      "subject": "Seu pedido foi confirmado",
+      "status": "SENT",
+      "attempts": [
+        { "number": 1, "at": "2026-10-10T14:03:24.120Z", "success": false, "error": "Tempo esgotado no servidor de e-mail" },
+        { "number": 2, "at": "2026-10-10T14:03:26.338Z", "success": true, "error": null }
+      ],
+      "scheduledAt": null,
+      "sentAt": "2026-10-10T14:03:26.338Z",
+      "createdAt": "2026-10-10T14:03:24.015Z"
+    }
+  ],
+  "page": 0,
+  "size": 20,
+  "totalElements": 1,
+  "totalPages": 1
+}

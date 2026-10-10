@@ -1,0 +1,66 @@
+{
+  "mappings": [
+    {
+      "name": "order-service: create order",
+      "request": {
+        "method": "POST",
+        "urlPathPattern": "/orders/?"
+      },
+      "response": {
+        "status": 202,
+        "headers": {
+          "Content-Type": "application/json",
+          "Location": "/orders/7c1f0a34-5b1d-4f6e-8a2b-9d3e4f5a6b7c"
+        },
+        "bodyFileName": "orders/created.json"
+      }
+    },
+    {
+      "name": "order-service: list orders",
+      "request": {
+        "method": "GET",
+        "urlPathPattern": "/orders/?"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "bodyFileName": "orders/page.json"
+      }
+    },
+    {
+      "name": "order-service: order by id",
+      "request": {
+        "method": "GET",
+        "urlPath": "/orders/7c1f0a34-5b1d-4f6e-8a2b-9d3e4f5a6b7c"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "bodyFileName": "orders/order.json"
+      }
+    },
+    {
+      "name": "order-service: order updates, one event every 2 s",
+      "request": {
+        "method": "GET",
+        "urlPath": "/orders/stream"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "text/event-stream",
+          "Cache-Control": "no-cache"
+        },
+        "bodyFileName": "orders/stream.txt",
+        "chunkedDribbleDelay": {
+          "numberOfChunks": 3,
+          "totalDuration": 6000
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,24 @@
+{
+  "content": [
+    {
+      "id": "b7d2f4a6-1c3e-4d5f-9a8b-2e4c6a8b0d1f",
+      "orderId": "9a2b6f10-3c4d-4e5f-8a6b-7c8d9e0f1a2b",
+      "amount": 7499.00,
+      "status": "REFUSED",
+      "reason": "LIMIT_EXCEEDED",
+      "createdAt": "2026-10-10T14:10:06.701Z"
+    },
+    {
+      "id": "a3c1e5d7-9b2f-4c6a-8e1d-3f5a7b9c1d2e",
+      "orderId": "7c1f0a34-5b1d-4f6e-8a2b-9d3e4f5a6b7c",
+      "amount": 699.80,
+      "status": "APPROVED",
+      "reason": null,
+      "createdAt": "2026-10-10T14:03:23.512Z"
+    }
+  ],
+  "page": 0,
+  "size": 20,
+  "totalElements": 2,
+  "totalPages": 1
+}

@@ -1,0 +1,23 @@
+{
+  "name": "anything else: 404 in the error format of the services",
+  "priority": 10,
+  "request": {
+    "urlPattern": ".*"
+  },
+  "response": {
+    "status": 404,
+    "headers": {
+      "Content-Type": "application/problem+json"
+    },
+    "jsonBody": {
+      "type": "about:blank",
+      "title": "Não encontrado",
+      "status": 404,
+      "detail": "Este exemplo não tem resposta para este caminho.",
+      "instance": "{{request.path}}"
+    },
+    "transformers": [
+      "response-template"
+    ]
+  }
+}

@@ -1,0 +1,9 @@
+{
+  "orderId": "7c1f0a34-5b1d-4f6e-8a2b-9d3e4f5a6b7c",
+  "status": "RESERVED",
+  "items": [
+    { "productId": "11111111-1111-1111-1111-111111111111", "quantity": 2, "unitPrice": 349.90 }
+  ],
+  "createdAt": "2026-10-10T14:03:22.951Z",
+  "releasedAt": null
+}

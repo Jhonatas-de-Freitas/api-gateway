@@ -1,0 +1,32 @@
+{
+  "mappings": [
+    {
+      "name": "payment-service: list payments",
+      "request": {
+        "method": "GET",
+        "urlPathPattern": "/payments/?"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "bodyFileName": "payments/page.json"
+      }
+    },
+    {
+      "name": "payment-service: payment of an order",
+      "request": {
+        "method": "GET",
+        "urlPath": "/payments/7c1f0a34-5b1d-4f6e-8a2b-9d3e4f5a6b7c"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "bodyFileName": "payments/payment.json"
+      }
+    }
+  ]
+}
