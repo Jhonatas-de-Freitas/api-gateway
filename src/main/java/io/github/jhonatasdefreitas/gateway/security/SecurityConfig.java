@@ -63,7 +63,9 @@ class SecurityConfig {
                 .logout(ServerHttpSecurity.LogoutSpec::disable)
                 .requestCache(cache -> cache.requestCache(NoOpServerRequestCache.getInstance()))
                 .securityContextRepository(NoOpServerSecurityContextRepository.getInstance())
-                .cors(cors -> cors.configurationSource(corsConfigurationSource(settings.cors())))
+                .cors(ServerHttpSecurity.CorsSpec::disable)
+                .addFilterAt(new CorsFilter(corsConfigurationSource(settings.cors()), problems),
+                        SecurityWebFiltersOrder.CORS)
                 .authorizeExchange(exchanges -> exchanges
                         .pathMatchers(HttpMethod.GET, "/api/products/**").permitAll()
                         .pathMatchers("/api/products/**", "/api/analytics/**").hasRole(ADMIN)

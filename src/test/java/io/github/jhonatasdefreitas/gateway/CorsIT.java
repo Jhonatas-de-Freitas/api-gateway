@@ -6,6 +6,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.test.web.reactive.server.EntityExchangeResult;
 
 class CorsIT extends IntegrationTestSupport {
 
@@ -36,12 +37,15 @@ class CorsIT extends IntegrationTestSupport {
 
     @Test
     void refusesThePreflightOfAnotherOrigin() {
-        client.options().uri("/api/orders")
+        EntityExchangeResult<String> refused = client.options().uri("/api/orders")
                 .header(HttpHeaders.ORIGIN, SOMEWHERE_ELSE)
                 .header(HttpHeaders.ACCESS_CONTROL_REQUEST_METHOD, "POST")
                 .exchange()
-                .expectStatus().isEqualTo(HttpStatus.FORBIDDEN)
-                .expectHeader().doesNotExist(HttpHeaders.ACCESS_CONTROL_ALLOW_ORIGIN);
+                .expectHeader().doesNotExist(HttpHeaders.ACCESS_CONTROL_ALLOW_ORIGIN)
+                .expectBody(String.class)
+                .returnResult();
+
+        expectProblem(refused, HttpStatus.FORBIDDEN, "/api/orders");
     }
 
     @Test
@@ -57,12 +61,14 @@ class CorsIT extends IntegrationTestSupport {
 
     @Test
     void refusesARequestOfAnotherOriginBeforeItReachesTheService() {
-        client.get().uri("/api/products")
+        EntityExchangeResult<String> refused = client.get().uri("/api/products")
                 .header(HttpHeaders.ORIGIN, SOMEWHERE_ELSE)
                 .exchange()
-                .expectStatus().isEqualTo(HttpStatus.FORBIDDEN)
-                .expectHeader().doesNotExist(HttpHeaders.ACCESS_CONTROL_ALLOW_ORIGIN);
+                .expectHeader().doesNotExist(HttpHeaders.ACCESS_CONTROL_ALLOW_ORIGIN)
+                .expectBody(String.class)
+                .returnResult();
 
+        expectProblem(refused, HttpStatus.FORBIDDEN, "/api/products");
         verifyNoServiceWasCalled();
     }
 
