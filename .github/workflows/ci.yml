@@ -1,0 +1,38 @@
+name: CI
+
+on:
+  push:
+    branches: [main, "ci/**"]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: 21
+          cache: maven
+
+      - name: Build and test
+        run: ./mvnw -B -ntp verify
+
+      # Integration tests skip themselves on a machine without Docker. Here that would hide a broken runner.
+      - name: Refuse skipped tests
+        run: |
+          reports=$(ls target/*-reports/TEST-*.xml)
+          if grep -L 'skipped="0"' $reports | grep .; then
+            echo "::error::The reports above have skipped tests"
+            exit 1
+          fi
