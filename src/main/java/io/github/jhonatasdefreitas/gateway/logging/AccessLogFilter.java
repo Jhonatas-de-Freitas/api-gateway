@@ -18,7 +18,7 @@ import reactor.core.publisher.Mono;
 @Order(Ordered.HIGHEST_PRECEDENCE + 2)
 public class AccessLogFilter implements WebFilter {
 
-    /** Filled in by the security chain once the token is accepted. */
+    // Filled in by the security chain once the token is accepted.
     public static final String USER_ATTRIBUTE = AccessLogFilter.class.getName() + ".user";
 
     private static final Logger log = LoggerFactory.getLogger("access");

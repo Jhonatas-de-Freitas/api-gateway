@@ -61,10 +61,8 @@ class Routes {
                 .build();
     }
 
-    /**
-     * The order matters: a refused request never reaches the breaker, and the retries of a GET run
-     * inside the breaker's time limit, so they count as a single call.
-     */
+    // The order matters: a refused request never reaches the breaker, and the retries of a GET run
+    // inside the breaker's time limit, so they count as a single call.
     private static GatewayFilterSpec guarded(GatewayFilterSpec filters, String service, GatewayFilter rateLimit) {
         return filters.stripPrefix(1)
                 // The services do not know about /api: a Location they answer gets the prefix back.

@@ -15,10 +15,8 @@ public class RateLimits {
     private static final String GENERAL = "general";
     private static final String ORDER_CREATION = "order-creation";
 
-    /**
-     * The limiter keeps one configuration per name. The name is also part of the Redis key, so the two
-     * buckets of the same user never mix.
-     */
+    // The limiter keeps one configuration per name. The name is also part of the Redis key, so the two
+    // buckets of the same user never mix.
     @Bean
     RedisRateLimiter redisRateLimiter(GatewaySettings settings) {
         Bucket general = settings.rateLimit().general();

@@ -14,7 +14,7 @@ public record GatewaySettings(Services services, RateLimit rateLimit, Cors cors)
     public record RateLimit(Bucket general, Bucket orderCreation) {
     }
 
-    /** Token bucket: {@code replenishRate} tokens per second, holding at most {@code burstCapacity}. */
+    // Token bucket: replenishRate tokens per second, holding at most burstCapacity.
     public record Bucket(int replenishRate, int burstCapacity) {
     }
 
