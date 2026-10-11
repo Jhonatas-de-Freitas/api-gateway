@@ -1,10 +1,13 @@
 # api-gateway
 
 [![CI](https://github.com/Jhonatas-de-Freitas/api-gateway/actions/workflows/ci.yml/badge.svg)](https://github.com/Jhonatas-de-Freitas/api-gateway/actions/workflows/ci.yml)
+![Java 21](https://img.shields.io/badge/Java-21-blue)
 
 A porta de entrada de uma loja fictícia. Tudo que vem de fora passa por aqui: o gateway confere o login (JWT do Keycloak), limita abuso (token bucket no Redis), protege contra serviço lento ou fora do ar (circuit breaker) e repassa a chamada para o serviço certo.
 
-Feito com Java 21, Spring Boot 4.1 e Spring Cloud Gateway (WebFlux). Faz parte de um conjunto de cinco projetos; os serviços de trás ficam no [order-platform](https://github.com/Jhonatas-de-Freitas/order-platform). Este repositório roda sozinho: no `docker compose` daqui, um WireMock faz o papel dos serviços.
+Feito com Java 21, Spring Boot 4.1 e Spring Cloud Gateway (WebFlux). Ele roda sozinho: no `docker compose` daqui, um WireMock faz o papel dos serviços.
+
+Este repositório faz parte de um sistema de pedidos com 5 repositórios. Os outros são o [order-platform](https://github.com/Jhonatas-de-Freitas/order-platform) (os serviços de trás), o [notification-service](https://github.com/Jhonatas-de-Freitas/notification-service), o [order-dashboard](https://github.com/Jhonatas-de-Freitas/order-dashboard) e o [order-analytics](https://github.com/Jhonatas-de-Freitas/order-analytics).
 
 ## Como funciona
 
@@ -60,7 +63,7 @@ Para parar e apagar tudo: `docker compose down`.
 
 Endereços dos serviços, limites e tempos são variáveis de ambiente (`ORDER_SERVICE_URL`, `RATE_LIMIT_BURST_CAPACITY`, `SERVICE_TIMEOUT`...). A lista com os valores padrão está em `src/main/resources/application.yml`.
 
-Os testes rodam com `./mvnw verify`. Os de integração sobem Redis e Keycloak com Testcontainers, então também precisam de Docker; sem ele são pulados e rodam só os de unidade.
+Os testes rodam com `./mvnw verify`. Os de integração sobem Redis e Keycloak com Testcontainers, então também precisam de Docker. Sem ele, são pulados e rodam só os de unidade; no CI, um teste pulado faz o build falhar.
 
 ## Como testar os cenários
 
@@ -176,3 +179,7 @@ Para ver o log de acesso: `docker compose logs api-gateway | grep access`.
 - Servir o Actuator em outra porta, só na rede interna. Hoje as métricas saem na porta pública; tirei delas os endereços dos serviços e do Redis, mas o volume por rota continua à vista.
 - Trace distribuído com OpenTelemetry. O correlation id já junta os logs, mas não mostra onde o tempo foi gasto.
 - Juntar no gateway a documentação OpenAPI dos serviços de trás, numa página só.
+
+## Licença
+
+MIT. Veja o arquivo [LICENSE](LICENSE).
